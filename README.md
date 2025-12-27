@@ -1,4 +1,4 @@
-// Cấu trúc dự án
+# Cấu trúc dự án
 
 ```
 ├── docs/                        
@@ -16,4 +16,5 @@
 │   ├── schema.sql                # Cấu trúc bảng: hộ khẩu, nhân khẩu, thu phí...
 │   └── sample_data.sql           # Dữ liệu mẫu để test
 ```
+
 
