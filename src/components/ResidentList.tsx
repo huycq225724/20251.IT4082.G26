@@ -16,35 +16,6 @@ const ResidentList: React.FC<ResidentListProps> = ({
   onDelete,
   onChangeStatus
 }) => {
-  const [openStatusId, setOpenStatusId] = React.useState<string | null>(null);
-  const [dropdownPos, setDropdownPos] = React.useState<{ x: number; y: number } | null>(null);
-  const dropdownRef = React.useRef<HTMLDivElement | null>(null);
-
-  React.useEffect(() => {
-    if (!openStatusId) return;
-
-    const onMouseDown = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setOpenStatusId(null);
-        setDropdownPos(null);
-      }
-    };
-
-    const onAnyScrollOrResize = () => {
-      setOpenStatusId(null);
-      setDropdownPos(null);
-    };
-
-    window.addEventListener('mousedown', onMouseDown);
-    window.addEventListener('resize', onAnyScrollOrResize);
-    window.addEventListener('scroll', onAnyScrollOrResize, true); // close khi scroll bất kỳ container nào
-
-    return () => {
-      window.removeEventListener('mousedown', onMouseDown);
-      window.removeEventListener('resize', onAnyScrollOrResize);
-      window.removeEventListener('scroll', onAnyScrollOrResize, true);
-    };
-  }, [openStatusId]);
 
   const sortedData = [...data].sort((a, b) => {
     if (a.apartmentId !== b.apartmentId) {
@@ -108,24 +79,8 @@ const ResidentList: React.FC<ResidentListProps> = ({
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className="text-sm text-slate-500">{res.entryDate}</span>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap relative">
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-                      const nextOpen = openStatusId === res.id ? null : res.id;
-
-                      if (nextOpen) {
-                        setDropdownPos({ x: rect.left, y: rect.bottom });
-                        setOpenStatusId(res.id);
-                      } else {
-                        setOpenStatusId(null);
-                        setDropdownPos(null);
-                      }
-                    }}
-                    className="cursor-pointer"
-                  >
-
+                <td className="px-6 py-4 whitespace-nowrap align-middle">
+                  <div className="flex items-center justify-center">
                     {res.status === 'active' && (
                       <span className="px-2 py-1 rounded-full text-[10px] font-bold uppercase
                         bg-emerald-50 text-emerald-600 border border-emerald-100">
@@ -146,9 +101,8 @@ const ResidentList: React.FC<ResidentListProps> = ({
                         Vắng mặt
                       </span>
                     )}
-                  </button>
+                  </div>
                 </td>
-
 
                 <td className="px-6 py-4 whitespace-nowrap">
                   {res.role === 'owner' && (
@@ -204,33 +158,7 @@ const ResidentList: React.FC<ResidentListProps> = ({
           </tbody>
         </table>
       </div>
-      {openStatusId && dropdownPos && createPortal(
-        <div
-          ref={dropdownRef}
-          className="fixed z-[9999] w-40 rounded-xl border border-slate-200 bg-white shadow-lg overflow-hidden"
-          style={{ left: dropdownPos.x, top: dropdownPos.y + 8 }}
-        >
-          {[
-            { key: 'active', label: 'Thường trú', cls: 'text-emerald-600' },
-            { key: 'temporary', label: 'Tạm trú', cls: 'text-amber-600' },
-            { key: 'absent', label: 'Vắng mặt', cls: 'text-rose-600' },
-          ].map(opt => (
-            <button
-              key={opt.key}
-              type="button"
-              onClick={() => {
-                onChangeStatus(openStatusId, opt.key as Resident['status']);
-                setOpenStatusId(null);
-                setDropdownPos(null);
-              }}
-              className={`w-full text-left px-4 py-2 text-sm hover:bg-slate-50 ${opt.cls}`}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>,
-        document.body
-      )}
+
 
     </div>
   );

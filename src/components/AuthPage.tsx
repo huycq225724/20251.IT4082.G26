@@ -121,7 +121,7 @@ const handleSubmit = (e: React.FormEvent) => {
         </div>
         
         <p className="text-center mt-8 text-slate-600 text-xs font-bold uppercase tracking-[0.2em]">
-          &copy; 2024 ApartManager System
+          &copy; 2025 ApartManager System
         </p>
       </div>
     </div>

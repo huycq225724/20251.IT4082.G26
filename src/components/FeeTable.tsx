@@ -11,34 +11,6 @@ interface FeeTableProps {
 }
 
 const FeeTable: React.FC<FeeTableProps> = ({ data, onEdit, onDelete, onChangeStatus }) => {
-  const [openStatusId, setOpenStatusId] = React.useState<string | null>(null);
-  const [dropdownPos, setDropdownPos] = React.useState<{ x: number; y: number } | null>(null);
-  const dropdownRef = React.useRef<HTMLDivElement | null>(null);
-
-  React.useEffect(() => {
-    if (!openStatusId) return;
-
-    const close = () => {
-      setOpenStatusId(null);
-      setDropdownPos(null);
-    };
-
-    const onClickOutside = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        close();
-      }
-    };
-
-    window.addEventListener('mousedown', onClickOutside);
-    window.addEventListener('resize', close);
-    window.addEventListener('scroll', close, true);
-
-    return () => {
-      window.removeEventListener('mousedown', onClickOutside);
-      window.removeEventListener('resize', close);
-      window.removeEventListener('scroll', close, true);
-    };
-  }, [openStatusId]);
 
 
   const sortedData = [...data].sort((a, b) => {
@@ -127,8 +99,6 @@ const FeeTable: React.FC<FeeTableProps> = ({ data, onEdit, onDelete, onChangeSta
                       if (item.status === PaymentStatus.PAID) return; // ✅ đã thanh toán -> không mở dropdown
 
                       const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-                      setDropdownPos({ x: rect.left, y: rect.bottom + 8 });
-                      setOpenStatusId(openStatusId === item.id ? null : item.id);
                     }}
                     className={`inline-flex ${item.status === PaymentStatus.PAID ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'}`}
                     title={item.status === PaymentStatus.PAID ? 'Đã thanh toán - không thể sửa trạng thái' : 'Đổi trạng thái'}
@@ -166,33 +136,6 @@ const FeeTable: React.FC<FeeTableProps> = ({ data, onEdit, onDelete, onChangeSta
           </tbody>
         </table>
       </div>
-      {openStatusId && dropdownPos && createPortal(
-        <div
-          ref={dropdownRef}
-          className="fixed z-[9999] w-44 rounded-xl border border-slate-200 bg-white shadow-lg overflow-hidden"
-          style={{ left: dropdownPos.x, top: dropdownPos.y }}
-        >
-          {[
-            { key: PaymentStatus.PENDING, label: 'Chờ thanh toán', cls: 'text-amber-600' },
-            { key: PaymentStatus.OVERDUE, label: 'Quá hạn', cls: 'text-rose-600' },
-            { key: PaymentStatus.PAID, label: 'Đã thanh toán', cls: 'text-emerald-600' },
-          ].map(opt => (
-            <button
-              key={opt.key}
-              type="button"
-              onClick={() => {
-                onChangeStatus?.(openStatusId, opt.key);
-                setOpenStatusId(null);
-                setDropdownPos(null);
-              }}
-              className={`w-full text-left px-4 py-2 text-sm hover:bg-slate-50 ${opt.cls}`}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>,
-        document.body
-      )}
 
     </div>
   );

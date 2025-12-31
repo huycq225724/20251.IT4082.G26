@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Resident } from '../types';
 import { LocalDB } from '../services/db';
 
@@ -12,17 +12,27 @@ interface ResidentModalProps {
 
 const BUILDINGS = ['A', 'B', 'C'] as const;
 
+const buildRooms = (maxFloor: number, unitsPerFloor = 10) => {
+  const rooms: number[] = [];
+  for (let floor = 1; floor <= maxFloor; floor++) {
+    for (let unit = 1; unit <= unitsPerFloor; unit++) {
+      rooms.push(floor * 100 + unit); // 101..110, 201..210...
+    }
+  }
+  return rooms;
+};
+
 const getRoomsByBuilding = (building?: string) => {
   if (!building) return [];
 
-  if (building === 'A') {
-    // 101 → 310
-    return Array.from({ length: 210 }, (_, i) => 101 + i);
-  }
+  // A: 101-110, 201-210, 301-310
+  if (building === 'A') return buildRooms(3, 10);
 
-  // B, C: 101 → 410
-  return Array.from({ length: 310 }, (_, i) => 101 + i);
+  // B, C: 101-110, 201-210, 301-310, 401-410
+  return buildRooms(4, 10);
 };
+
+
 
 
 const ResidentModal: React.FC<ResidentModalProps> = ({
@@ -40,6 +50,54 @@ const ResidentModal: React.FC<ResidentModalProps> = ({
   const [building, setBuilding] = useState<string>('');
   const [room, setRoom] = useState<string>('');
 
+  const dateRef = useRef<HTMLInputElement | null>(null);
+
+  const openDatePicker = () => {
+    const el = dateRef.current;
+    if (!el) return;
+
+    // Chrome/Edge hỗ trợ showPicker()
+    // @ts-ignore
+    if (typeof el.showPicker === 'function') el.showPicker();
+    else el.focus(); // fallback
+  };
+
+
+  // --- Date helpers: lưu ISO (YYYY-MM-DD), hiển thị dd/mm/yyyy ---
+const isoToDMY = (iso?: string) => {
+  if (!iso) return '';
+  // iso expected: YYYY-MM-DD
+  const [y, m, d] = iso.split('-');
+  if (!y || !m || !d) return '';
+  return `${d}/${m}/${y}`;
+};
+
+const dmyToISO = (dmy: string) => {
+  // expected: dd/mm/yyyy
+  const cleaned = dmy.trim();
+  const match = cleaned.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (!match) return null;
+
+  const dd = Number(match[1]);
+  const mm = Number(match[2]);
+  const yyyy = Number(match[3]);
+
+  if (mm < 1 || mm > 12 || dd < 1 || dd > 31) return null;
+
+  // validate date thật (tránh 31/02/2025)
+  const dt = new Date(yyyy, mm - 1, dd);
+  if (dt.getFullYear() !== yyyy || dt.getMonth() !== mm - 1 || dt.getDate() !== dd) return null;
+
+  const dd2 = String(dd).padStart(2, '0');
+  const mm2 = String(mm).padStart(2, '0');
+  return `${yyyy}-${mm2}-${dd2}`;
+};
+
+const [entryDateDisplay, setEntryDateDisplay] = useState<string>(
+  isoToDMY(new Date().toISOString().split('T')[0])
+);
+
+
   const residents = LocalDB.getResidents();
 
 
@@ -48,6 +106,8 @@ const ResidentModal: React.FC<ResidentModalProps> = ({
       if (resident) {
         // EDIT MODE
         setFormData(resident);
+        setEntryDateDisplay(isoToDMY(resident.entryDate));
+
 
         if (resident.apartmentId) {
           const [b, r] = resident.apartmentId.split('-');
@@ -61,6 +121,7 @@ const ResidentModal: React.FC<ResidentModalProps> = ({
           role: 'member',
           entryDate: new Date().toISOString().split('T')[0]
         });
+        setEntryDateDisplay(isoToDMY(new Date().toISOString().split('T')[0]));
         setBuilding('');
         setRoom('');
       }
@@ -242,15 +303,42 @@ const ResidentModal: React.FC<ResidentModalProps> = ({
             <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">
               Ngày vào ở
             </label>
-            <input
-              type="date"
-              name="entryDate"
-              value={formData.entryDate || ''}
-              onChange={handleChange}
-              className="w-full px-5 py-3 rounded-2xl bg-slate-800 border border-slate-700 text-white"
-              required
-            />
+
+            {/* Wrapper để overlay date picker */}
+            <div
+              className="relative cursor-pointer"
+              onClick={openDatePicker}
+            >
+              {/* Ô hiển thị dd/mm/yyyy (chỉ hiển thị, không bắt click) */}
+              <input
+                type="text"
+                value={isoToDMY(formData.entryDate || '')}
+                readOnly
+                className="w-full px-5 py-3 rounded-2xl bg-slate-800 border border-slate-700 text-white pr-12 pointer-events-none"
+              />
+
+              {/* Icon lịch (chỉ hiển thị) */}
+              <div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-slate-400">
+                📅
+              </div>
+
+              {/* Input date thật: đặt z-index cao để luôn ăn click nếu cần */}
+              <input
+                ref={dateRef}
+                type="date"
+                name="entryDate"
+                value={formData.entryDate || ''}
+                onChange={(e) => {
+                  const iso = e.target.value; // YYYY-MM-DD
+                  setFormData(prev => ({ ...prev, entryDate: iso }));
+                }}
+                className="absolute inset-0 w-full h-full opacity-0 z-20"
+                required
+              />
+            </div>
+
           </div>
+
 
 
           {/* Trạng thái */}
