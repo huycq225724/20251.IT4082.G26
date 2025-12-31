@@ -1,19 +1,51 @@
 
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { Resident } from '../types';
 
 interface ResidentListProps {
   data: Resident[];
   onEdit: (resident: Resident) => void;
   onDelete: (id: string) => void;
+  onChangeStatus: (id: string, status: Resident['status']) => void;
 }
 
 const ResidentList: React.FC<ResidentListProps> = ({
   data,
   onEdit,
-  onDelete
+  onDelete,
+  onChangeStatus
 }) => {
-  // sort theo căn hộ -> theo first name
+  const [openStatusId, setOpenStatusId] = React.useState<string | null>(null);
+  const [dropdownPos, setDropdownPos] = React.useState<{ x: number; y: number } | null>(null);
+  const dropdownRef = React.useRef<HTMLDivElement | null>(null);
+
+  React.useEffect(() => {
+    if (!openStatusId) return;
+
+    const onMouseDown = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setOpenStatusId(null);
+        setDropdownPos(null);
+      }
+    };
+
+    const onAnyScrollOrResize = () => {
+      setOpenStatusId(null);
+      setDropdownPos(null);
+    };
+
+    window.addEventListener('mousedown', onMouseDown);
+    window.addEventListener('resize', onAnyScrollOrResize);
+    window.addEventListener('scroll', onAnyScrollOrResize, true); // close khi scroll bất kỳ container nào
+
+    return () => {
+      window.removeEventListener('mousedown', onMouseDown);
+      window.removeEventListener('resize', onAnyScrollOrResize);
+      window.removeEventListener('scroll', onAnyScrollOrResize, true);
+    };
+  }, [openStatusId]);
+
   const sortedData = [...data].sort((a, b) => {
     if (a.apartmentId !== b.apartmentId) {
       return a.apartmentId.localeCompare(b.apartmentId);
@@ -76,13 +108,48 @@ const ResidentList: React.FC<ResidentListProps> = ({
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className="text-sm text-slate-500">{res.entryDate}</span>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  {res.status === 'active' ? (
-                    <span className="px-2 py-1 rounded-full text-[10px] font-bold uppercase bg-emerald-50 text-emerald-600 border border-emerald-100">Thường trú</span>
-                  ) : (
-                    <span className="px-2 py-1 rounded-full text-[10px] font-bold uppercase bg-slate-50 text-slate-600 border border-slate-100">Tạm trú</span>
-                  )}
+                <td className="px-6 py-4 whitespace-nowrap relative">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                      const nextOpen = openStatusId === res.id ? null : res.id;
+
+                      if (nextOpen) {
+                        setDropdownPos({ x: rect.left, y: rect.bottom });
+                        setOpenStatusId(res.id);
+                      } else {
+                        setOpenStatusId(null);
+                        setDropdownPos(null);
+                      }
+                    }}
+                    className="cursor-pointer"
+                  >
+
+                    {res.status === 'active' && (
+                      <span className="px-2 py-1 rounded-full text-[10px] font-bold uppercase
+                        bg-emerald-50 text-emerald-600 border border-emerald-100">
+                        Thường trú
+                      </span>
+                    )}
+
+                    {res.status === 'temporary' && (
+                      <span className="px-2 py-1 rounded-full text-[10px] font-bold uppercase
+                        bg-amber-50 text-amber-600 border border-amber-100">
+                        Tạm trú
+                      </span>
+                    )}
+
+                    {res.status === 'absent' && (
+                      <span className="px-2 py-1 rounded-full text-[10px] font-bold uppercase
+                        bg-rose-50 text-rose-600 border border-rose-100">
+                        Vắng mặt
+                      </span>
+                    )}
+                  </button>
                 </td>
+
+
                 <td className="px-6 py-4 whitespace-nowrap">
                   {res.role === 'owner' && (
                     <span className="px-2 py-1 rounded-full text-[10px] font-bold uppercase bg-blue-50 text-blue-600 border border-blue-100">
@@ -137,6 +204,34 @@ const ResidentList: React.FC<ResidentListProps> = ({
           </tbody>
         </table>
       </div>
+      {openStatusId && dropdownPos && createPortal(
+        <div
+          ref={dropdownRef}
+          className="fixed z-[9999] w-40 rounded-xl border border-slate-200 bg-white shadow-lg overflow-hidden"
+          style={{ left: dropdownPos.x, top: dropdownPos.y + 8 }}
+        >
+          {[
+            { key: 'active', label: 'Thường trú', cls: 'text-emerald-600' },
+            { key: 'temporary', label: 'Tạm trú', cls: 'text-amber-600' },
+            { key: 'absent', label: 'Vắng mặt', cls: 'text-rose-600' },
+          ].map(opt => (
+            <button
+              key={opt.key}
+              type="button"
+              onClick={() => {
+                onChangeStatus(openStatusId, opt.key as Resident['status']);
+                setOpenStatusId(null);
+                setDropdownPos(null);
+              }}
+              className={`w-full text-left px-4 py-2 text-sm hover:bg-slate-50 ${opt.cls}`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>,
+        document.body
+      )}
+
     </div>
   );
 };

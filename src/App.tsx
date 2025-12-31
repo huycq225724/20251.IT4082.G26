@@ -32,18 +32,25 @@ const App: React.FC = () => {
   const [editingResident, setEditingResident] = useState<Resident | null>(null);
   const [selectedFee, setSelectedFee] = useState<FeeItem | null>(null);
 
+  
+  const reloadData = () => {
+  setFees(LocalDB.getFees());
+  setResidents(LocalDB.getResidents());
+  setNotifications(LocalDB.getNotifications());
+};
+
+  
   useEffect(() => {
-    setFees(LocalDB.getFees());
-    setResidents(LocalDB.getResidents());
-    setNotifications(LocalDB.getNotifications());
-    
-    // Load theme
+    reloadData();
+
     const savedTheme = localStorage.getItem('app-theme') as 'light' | 'dark';
     if (savedTheme) setTheme(savedTheme);
 
-    // Check auth
-    if (LocalDB.getCurrentUser()) setIsLoggedIn(true);
+    setIsLoggedIn(false);
+    LocalDB.setCurrentUser(null);
+
   }, []);
+
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark');
@@ -73,16 +80,16 @@ const App: React.FC = () => {
       };
       newFees = [newFee, ...fees];
     }
-    setFees(newFees);
     LocalDB.saveFees(newFees);
+    reloadData();
     setIsModalOpen(false);
   };
 
   const handleDeleteFee = (id: string) => {
     if (window.confirm('Bạn có chắc chắn muốn xóa khoản phí này?')) {
-      const newFees = fees.filter(f => f.id !== id);
-      setFees(newFees);
+      const newFees = LocalDB.getFees().filter(f => f.id !== id);
       LocalDB.saveFees(newFees);
+      reloadData();
     }
   };
 
@@ -102,25 +109,34 @@ const App: React.FC = () => {
 
   const renderContent = () => {
     switch (activeTab) {
-      case 'dashboard': return <Dashboard data={fees} />;
+      case 'dashboard': return <Dashboard fees={fees} residents={residents} />;
       case 'fees': return <FeeTable data={filteredFees} onEdit={(f) => { setSelectedFee(f); setIsModalOpen(true); }} onDelete={handleDeleteFee} />;
       case 'residents':
         return (
           <ResidentList
             data={filteredResidents}
             onEdit={(resident) => {
-              setEditingResident(resident);        
-              setIsResidentModalOpen(true);        
+              setEditingResident(resident);
+              setIsResidentModalOpen(true);
+            }}
+            onChangeStatus={(id, status) => {
+              const newList = LocalDB.getResidents().map(r =>
+                r.id === id ? { ...r, status } : r
+              );
+
+              LocalDB.saveResidents(newList);
+              reloadData(); 
             }}
 
             onDelete={(id) => {
               if (window.confirm('Bạn có chắc chắn muốn xóa cư dân này?')) {
-                const newList = residents.filter(r => r.id !== id);
-                setResidents(newList);
-                LocalDB.saveResidents(newList);
+                const newList = LocalDB.getResidents().filter(r => r.id !== id);
+                  LocalDB.saveResidents(newList);
+                  reloadData();
               }
             }}
           />
+
         );
 
       case 'activities': return <ActivityManagement />;
@@ -129,7 +145,7 @@ const App: React.FC = () => {
       case 'technical': return <TechnicalService />;
       case 'feedback': return <FeedbackBox />;
       case 'profile': return <ProfilePage />;
-      default: return <Dashboard data={fees} />;
+      default: return <Dashboard fees={fees} residents={residents} />;
     }
   };
 

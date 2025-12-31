@@ -101,11 +101,6 @@ const handleSubmit = (e: React.FormEvent) => {
                 </p>
               )}
 
-              <p className="text-slate-500 text-xs text-center mt-2">
-                Demo admin: <b>admin@apart.vn / 123456</b>
-              </p>
-
-
               <button type="submit" className="w-full py-4 bg-blue-600 text-white font-black rounded-2xl hover:bg-blue-700 shadow-xl shadow-blue-900/40 transition-all active:scale-[0.98] mt-4 uppercase tracking-widest text-sm">
                 {isLogin ? 'Đăng Nhập Ngay' : 'Tạo Tài Khoản'}
               </button>

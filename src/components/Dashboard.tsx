@@ -1,33 +1,99 @@
 
 import React from 'react';
-import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
-import { FeeItem, PaymentStatus } from '../types';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import { FeeItem, Resident, PaymentStatus } from '../types';
 
 interface DashboardProps {
-  data: FeeItem[];
+  fees: FeeItem[];
+  residents: Resident[];
 }
 
 const STATS_COLORS = ['#cbd5e1', '#3b82f6', '#f97316', '#ef4444', '#10b981'];
 
-const Dashboard: React.FC<DashboardProps> = ({ data }) => {
-  const paidCount = data.filter(f => f.status === PaymentStatus.PAID).length;
-  const pendingCount = data.filter(f => f.status === PaymentStatus.PENDING).length;
-  const overdueCount = data.filter(f => f.status === PaymentStatus.OVERDUE).length;
-  const totalCount = data.length || 1;
+const Dashboard: React.FC<DashboardProps> = ({ fees = [], residents = [] }) => {
+  const now = new Date();
+  const currentMonth = String(now.getMonth() + 1); // '12'
+  const currentYear = now.getFullYear(); // 2025...
 
-  const paymentChartData = [
-    { name: 'Chờ nộp', value: pendingCount },
-    { name: 'Đã hoàn thành', value: paidCount },
-    { name: 'Quá hạn', value: overdueCount },
-  ];
+  const monthFees = fees.filter(
+    (f) => String(f.month) === currentMonth && f.year === currentYear
+  );
 
-  const totalCollected = data
-    .filter(f => f.status === PaymentStatus.PAID)
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const isCurrentMonth = (f: FeeItem) =>
+    String(f.month) === currentMonth && f.year === currentYear;
+
+  const isOverdue = (f: FeeItem) => f.status === PaymentStatus.OVERDUE;
+
+  const paidCount = monthFees.filter((f) => f.status === PaymentStatus.PAID).length;
+  const pendingCount = monthFees.filter((f) => f.status !== PaymentStatus.PAID && !isOverdue(f)).length;
+  const overdueThisMonthCount = monthFees.filter((f) => isOverdue(f)).length;
+  const overdueBacklogCount = fees.filter((f) => !isCurrentMonth(f) && isOverdue(f)).length;
+  const overdueCount = overdueThisMonthCount + overdueBacklogCount;
+
+  const totalCount = monthFees.length;
+  const completionPct = totalCount ? (paidCount / totalCount) * 100 : 0;
+
+  const chartPaidCount = fees.filter((f) => f.status === PaymentStatus.PAID).length;
+  const chartPendingCount = fees.filter((f) => f.status === PaymentStatus.PENDING).length;
+  const chartOverdueCount = fees.filter((f) => f.status === PaymentStatus.OVERDUE).length;
+
+  const chartTotal = chartPaidCount + chartPendingCount + chartOverdueCount || 1;
+
+
+  const totalCollected = monthFees
+    .filter((f) => f.status === PaymentStatus.PAID)
     .reduce((sum, item) => sum + item.total, 0);
 
-  const formatCurrency = (val: number) => {
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val);
+  const overdueApartmentCount = new Set(
+    fees.filter((f) => f.status === PaymentStatus.OVERDUE).map((f) => f.apartmentId)
+  ).size;
+
+
+
+  const formatCurrency = (val: number) =>
+    new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val);
+
+  const formatShortDate = (iso: string) => {
+    const d = new Date(iso);
+    return new Intl.DateTimeFormat('vi-VN', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    }).format(d);
   };
+
+
+  const paymentChartData = [
+    { key: 'pending', name: 'Chờ nộp', value: chartPendingCount },
+    { key: 'paid', name: 'Đã hoàn thành', value: chartPaidCount },
+    { key: 'overdue', name: 'Quá hạn', value: chartOverdueCount },
+  ] as const;
+
+
+  const PAYMENT_COLORS: Record<(typeof paymentChartData)[number]['key'], string> = {
+    pending: '#f59e0b',
+    paid: '#10b981',    
+    overdue: '#ef4444', 
+  };
+
+  const thisMonthResidents = residents.filter((r) => {
+    const d = new Date(r.entryDate);
+    return d.getFullYear() === currentYear && String(d.getMonth() + 1) === currentMonth;
+  });
+
+  const newestResidents = (thisMonthResidents.length ? thisMonthResidents : residents)
+    .slice()
+    .sort((a, b) => new Date(b.entryDate).getTime() - new Date(a.entryDate).getTime())
+    .slice(0, 3);
+
+  const topUnpaidFees = fees
+    .filter((f) => f.status !== PaymentStatus.PAID)
+    .slice()
+    .sort((a, b) => b.total - a.total)
+    .slice(0, 5);
 
   return (
     <div className="space-y-6 pb-12 animate-in fade-in duration-500 transition-colors">
@@ -37,26 +103,30 @@ const Dashboard: React.FC<DashboardProps> = ({ data }) => {
           title="Hóa đơn tháng này" 
           value={`${paidCount} / ${totalCount}`} 
           color="bg-blue-500" 
-          progress={(paidCount / totalCount) * 100}
+          progress={completionPct}
         />
+
         <SummaryCard 
           title="Tỷ lệ hoàn thành" 
-          value={`${Math.round((paidCount / totalCount) * 100)}%`} 
+          value={`${Math.round(completionPct)}%`} 
           color="bg-emerald-500" 
-          progress={Math.round((paidCount / totalCount) * 100)}
+          progress={completionPct}
         />
+
         <SummaryCard 
-          title="Tổng đã thu (VNĐ)" 
+          title="Tổng đã thu tháng này (VNĐ)" 
           value={formatCurrency(totalCollected).replace('₫', '').trim()} 
           color="bg-indigo-600" 
-          progress={75}
+          progress={completionPct}
         />
+
         <SummaryCard 
           title="Căn hộ quá hạn" 
-          value={`${overdueCount} Căn`} 
+          value={`${overdueApartmentCount} Căn`} 
           color="bg-rose-500" 
-          progress={(overdueCount / totalCount) * 100}
+          progress={0}
         />
+
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -93,14 +163,24 @@ const Dashboard: React.FC<DashboardProps> = ({ data }) => {
                <div className="flex flex-wrap justify-center gap-6 mb-6">
                   {paymentChartData.map((item, idx) => (
                     <div key={item.name} className="flex items-center gap-2">
-                      <div className="w-4 h-4 rounded-full" style={{backgroundColor: STATS_COLORS[idx+1]}}></div>
+                      <div
+                        className="w-4 h-4 rounded-full"
+                        style={{ backgroundColor: PAYMENT_COLORS[item.key] }}
+                      />
                       <span className="text-xs text-slate-600 dark:text-slate-400 font-semibold">{item.name}</span>
                     </div>
                   ))}
                </div>
+
+
+
                <div className="h-56">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
+                    <Tooltip
+                      content={<PaymentTooltip total={chartTotal} />}
+                      cursor={false}
+                    />
                     <Pie
                       data={paymentChartData}
                       cx="50%"
@@ -113,10 +193,11 @@ const Dashboard: React.FC<DashboardProps> = ({ data }) => {
                       dataKey="value"
                     >
                       {paymentChartData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={STATS_COLORS[index+1]} />
+                        <Cell key={`cell-${index}`} fill={PAYMENT_COLORS[entry.key]} />
                       ))}
                     </Pie>
                   </PieChart>
+
                 </ResponsiveContainer>
               </div>
             </div>
@@ -127,7 +208,7 @@ const Dashboard: React.FC<DashboardProps> = ({ data }) => {
         <div className="space-y-6">
           <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm transition-colors">
             <div className="px-5 py-3 border-b border-slate-100 dark:border-slate-800 bg-slate-700 dark:bg-slate-800">
-              <h3 className="text-sm font-bold text-white uppercase">Cư dân mới tháng này</h3>
+              <h3 className="text-sm font-bold text-white uppercase">Cư dân mới nhất</h3>
             </div>
             <div className="p-0">
               <table className="w-full text-left text-xs">
@@ -138,17 +219,23 @@ const Dashboard: React.FC<DashboardProps> = ({ data }) => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
-                  <ResidentRow apt="A-402" name="Lê Mạnh Hùng" date="12/05" />
-                  <ResidentRow apt="B-105" name="Phạm Minh Tuấn" date="10/05" />
-                  <ResidentRow apt="C-702" name="Nguyễn Thu Trang" date="05/05" />
+                  {newestResidents.map((r) => (
+                    <ResidentRow
+                      key={r.id}
+                      apt={r.apartmentId}
+                      name={r.name}
+                      date={formatShortDate(r.entryDate)}
+                    />
+                  ))}
                 </tbody>
+
               </table>
             </div>
           </div>
 
           <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm transition-colors">
             <div className="px-5 py-3 border-b border-slate-100 dark:border-slate-800 bg-slate-700 dark:bg-slate-800">
-              <h3 className="text-sm font-bold text-white uppercase">Top hóa đơn lớn nhất</h3>
+              <h3 className="text-sm font-bold text-white uppercase">Top hóa đơn lớn nhất chưa đóng</h3>
             </div>
             <div className="p-0">
               <table className="w-full text-left text-xs">
@@ -159,7 +246,7 @@ const Dashboard: React.FC<DashboardProps> = ({ data }) => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
-                  {data.sort((a,b) => b.total - a.total).slice(0, 5).map(item => (
+                  {topUnpaidFees.map((item) => (
                     <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                       <td className="px-4 py-3 text-slate-700 dark:text-slate-300 font-bold">{item.apartmentId}</td>
                       <td className="px-4 py-3 text-right text-blue-600 dark:text-blue-400 font-bold">{formatCurrency(item.total)}</td>
@@ -216,5 +303,45 @@ const PendingReportRow = ({ apt, type, time, status }: { apt: string; type: stri
     </td>
   </tr>
 );
+
+const PaymentTooltip = ({ active, payload, total }: any) => {
+  if (!active || !payload || !payload.length) return null;
+
+  const item = payload[0]?.payload as { key: 'pending' | 'paid' | 'overdue'; name: string; value: number };
+  const val = item?.value ?? 0;
+  const denom = total || 1;
+  const pct = Math.round((val / denom) * 100);
+
+  const label =
+    item.key === 'paid' ? 'Đã nộp' : item.key === 'pending' ? 'Chờ nộp' : 'Quá hạn';
+
+  return (
+    <div className="rounded-xl bg-slate-900/95 border border-slate-700 px-4 py-3 shadow-xl">
+      <div className="text-sm font-extrabold text-white mb-2">
+        Trạng thái: {item.name}
+      </div>
+
+      <div className="text-xs text-slate-200 space-y-1">
+        <div>
+          <span className="text-slate-400">Số lượng:</span>{' '}
+          <span className="font-bold text-white">{val}</span>
+        </div>
+
+        <div>
+          <span className="text-slate-400">{label}:</span>{' '}
+          <span className="font-bold text-white">
+            {val}/{denom}
+          </span>
+        </div>
+
+        <div>
+          <span className="text-slate-400">Tỷ lệ:</span>{' '}
+          <span className="font-bold text-white">{pct}%</span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 
 export default Dashboard;
