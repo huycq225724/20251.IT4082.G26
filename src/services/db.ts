@@ -23,25 +23,27 @@ const ensureSeed = () => {
 };
 
 const mockFees: FeeItem[] = [
-  { id: 'F-A101-102025', apartmentId: 'A-101', residentName: 'Nguyễn Văn An', month: '10', year: 2025, managementFee: 500000, electricity: 900000, water: 250000, parking: 100000, total: 1750000, status: PaymentStatus.PAID, dueDate: '2025-10-10' },
-  { id: 'F-A101-112025', apartmentId: 'A-101', residentName: 'Nguyễn Văn An', month: '11', year: 2025, managementFee: 500000, electricity: 850000, water: 230000, parking: 100000, total: 1680000, status: PaymentStatus.PAID, dueDate: '2025-11-10' },
-  { id: 'F-A102-102025', apartmentId: 'A-102', residentName: 'Phạm Thị Lan', month: '10', year: 2025, managementFee: 500000, electricity: 780000, water: 210000, parking: 100000, total: 1590000, status: PaymentStatus.PAID, dueDate: '2025-10-10' },
-  { id: 'F-A201-112025', apartmentId: 'A-201', residentName: 'Lê Văn Hùng', month: '11', year: 2025, managementFee: 550000, electricity: 1200000, water: 300000, parking: 150000, total: 2200000, status: PaymentStatus.PAID, dueDate: '2025-11-10' },
-  { id: 'F-B205-102025', apartmentId: 'B-205', residentName: 'Lê Văn Cường', month: '10', year: 2025, managementFee: 700000, electricity: 1900000, water: 420000, parking: 200000, total: 3220000, status: PaymentStatus.OVERDUE, dueDate: '2025-10-10' },
-  { id: 'F-B310-112025', apartmentId: 'B-310', residentName: 'Đỗ Minh Quân', month: '11', year: 2025, managementFee: 600000, electricity: 1300000, water: 280000, parking: 150000, total: 2330000, status: PaymentStatus.OVERDUE, dueDate: '2025-11-10' },
-  { id: 'F-B402-102025', apartmentId: 'B-402', residentName: 'Hoàng Thị Yến', month: '10', year: 2025, managementFee: 650000, electricity: 1400000, water: 300000, parking: 150000, total: 2500000, status: PaymentStatus.PAID, dueDate: '2025-10-10' },
-  { id: 'F-C101-112025', apartmentId: 'C-101', residentName: 'Vũ Văn Nam', month: '11', year: 2025, managementFee: 500000, electricity: 950000, water: 240000, parking: 100000, total: 1790000, status: PaymentStatus.PAID, dueDate: '2025-11-10' },
-  { id: 'F-C410-102025', apartmentId: 'C-410', residentName: 'Trịnh Quốc Bảo', month: '10', year: 2025, managementFee: 800000, electricity: 2200000, water: 480000, parking: 250000, total: 3730000, status: PaymentStatus.PAID, dueDate: '2025-10-10' },
-  
-  { id: 'F-A101-122025', apartmentId: 'A-101', residentName: 'Nguyễn Văn An', month: '12', year: 2025, managementFee: 500000, electricity: 880000, water: 240000, parking: 100000, total: 1720000, status: PaymentStatus.PAID, dueDate: '2025-12-10' },
-  { id: 'F-A102-122025', apartmentId: 'A-102', residentName: 'Phạm Thị Lan', month: '12', year: 2025, managementFee: 500000, electricity: 820000, water: 220000, parking: 100000, total: 1640000, status: PaymentStatus.PENDING, dueDate: '2025-12-10' },
-  { id: 'F-A201-122025', apartmentId: 'A-201', residentName: 'Lê Văn Hùng', month: '12', year: 2025, managementFee: 550000, electricity: 1180000, water: 290000, parking: 150000, total: 2170000, status: PaymentStatus.PAID, dueDate: '2025-12-10' },
-  { id: 'F-B205-122025', apartmentId: 'B-205', residentName: 'Lê Văn Cường', month: '12', year: 2025, managementFee: 700000, electricity: 2100000, water: 450000, parking: 200000, total: 3450000, status: PaymentStatus.PENDING, dueDate: '2025-12-10' },
-  { id: 'F-B310-122025', apartmentId: 'B-310', residentName: 'Đỗ Minh Quân', month: '12', year: 2025, managementFee: 600000, electricity: 1350000, water: 300000, parking: 150000, total: 2400000, status: PaymentStatus.PAID, dueDate: '2025-12-10' },
-  { id: 'F-B402-122025', apartmentId: 'B-402', residentName: 'Hoàng Thị Yến', month: '12', year: 2025, managementFee: 650000, electricity: 1450000, water: 310000, parking: 150000, total: 2560000, status: PaymentStatus.PAID, dueDate: '2025-12-10' },
-  { id: 'F-C101-122025', apartmentId: 'C-101', residentName: 'Vũ Văn Nam', month: '12', year: 2025, managementFee: 500000, electricity: 980000, water: 260000, parking: 100000, total: 1840000, status: PaymentStatus.PAID, dueDate: '2025-12-10' },
-  { id: 'F-C410-122025', apartmentId: 'C-410', residentName: 'Trịnh Quốc Bảo', month: '12', year: 2025, managementFee: 800000, electricity: 2400000, water: 520000, parking: 250000, total: 3970000, status: PaymentStatus.PENDING, dueDate: '2025-12-10' },
+  { id: 'F-A101-112025', apartmentId: 'A-101', residentName: 'Nguyễn Văn An', month: '11', year: 2025, managementFee: 500000, electricity: 900000, water: 250000, parking: 100000, total: 1750000, status: PaymentStatus.PAID, dueDate: '2025-11-10' },
+  { id: 'F-A102-112025', apartmentId: 'A-102', residentName: 'Phạm Thị Lan', month: '11', year: 2025, managementFee: 500000, electricity: 780000, water: 210000, parking: 100000, total: 1590000, status: PaymentStatus.PAID, dueDate: '2025-11-10' },
+  { id: 'F-B205-112025', apartmentId: 'B-205', residentName: 'Lê Văn Cường', month: '11', year: 2025, managementFee: 700000, electricity: 1900000, water: 420000, parking: 200000, total: 3220000, status: PaymentStatus.OVERDUE, dueDate: '2025-11-10' },
+  { id: 'F-B402-112025', apartmentId: 'B-402', residentName: 'Hoàng Thị Yến', month: '11', year: 2025, managementFee: 650000, electricity: 1400000, water: 300000, parking: 150000, total: 2500000, status: PaymentStatus.PAID, dueDate: '2025-11-10' },
+  { id: 'F-C410-112025', apartmentId: 'C-410', residentName: 'Trịnh Quốc Bảo', month: '11', year: 2025, managementFee: 800000, electricity: 2200000, water: 480000, parking: 250000, total: 3730000, status: PaymentStatus.PAID, dueDate: '2025-11-10' },
+
+  { id: 'F-A101-122025', apartmentId: 'A-101', residentName: 'Nguyễn Văn An', month: '12', year: 2025, managementFee: 500000, electricity: 850000, water: 230000, parking: 100000, total: 1680000, status: PaymentStatus.PAID, dueDate: '2025-12-10' },
+  { id: 'F-A201-122025', apartmentId: 'A-201', residentName: 'Lê Văn Hùng', month: '12', year: 2025, managementFee: 550000, electricity: 1200000, water: 300000, parking: 150000, total: 2200000, status: PaymentStatus.PAID, dueDate: '2025-12-10' },
+  { id: 'F-B310-122025', apartmentId: 'B-310', residentName: 'Đỗ Minh Quân', month: '12', year: 2025, managementFee: 600000, electricity: 1300000, water: 280000, parking: 150000, total: 2330000, status: PaymentStatus.OVERDUE, dueDate: '2025-12-10' },
+  { id: 'F-C101-122025', apartmentId: 'C-101', residentName: 'Vũ Văn Nam', month: '12', year: 2025, managementFee: 500000, electricity: 950000, water: 240000, parking: 100000, total: 1790000, status: PaymentStatus.PAID, dueDate: '2025-12-10' },
+
+  { id: 'F-A101-012026', apartmentId: 'A-101', residentName: 'Nguyễn Văn An', month: '1', year: 2026, managementFee: 500000, electricity: 880000, water: 240000, parking: 100000, total: 1720000, status: PaymentStatus.PAID, dueDate: '2026-01-10' },
+  { id: 'F-A102-012026', apartmentId: 'A-102', residentName: 'Phạm Thị Lan', month: '1', year: 2026, managementFee: 500000, electricity: 820000, water: 220000, parking: 100000, total: 1640000, status: PaymentStatus.PENDING, dueDate: '2026-01-10' },
+  { id: 'F-A201-012026', apartmentId: 'A-201', residentName: 'Lê Văn Hùng', month: '1', year: 2026, managementFee: 550000, electricity: 1180000, water: 290000, parking: 150000, total: 2170000, status: PaymentStatus.PAID, dueDate: '2026-01-10' },
+  { id: 'F-B205-012026', apartmentId: 'B-205', residentName: 'Lê Văn Cường', month: '1', year: 2026, managementFee: 700000, electricity: 2100000, water: 450000, parking: 200000, total: 3450000, status: PaymentStatus.PENDING, dueDate: '2026-01-10' },
+  { id: 'F-B310-012026', apartmentId: 'B-310', residentName: 'Đỗ Minh Quân', month: '1', year: 2026, managementFee: 600000, electricity: 1350000, water: 300000, parking: 150000, total: 2400000, status: PaymentStatus.PAID, dueDate: '2026-01-10' },
+  { id: 'F-B402-012026', apartmentId: 'B-402', residentName: 'Hoàng Thị Yến', month: '1', year: 2026, managementFee: 650000, electricity: 1450000, water: 310000, parking: 150000, total: 2560000, status: PaymentStatus.PAID, dueDate: '2026-01-10' },
+  { id: 'F-C101-012026', apartmentId: 'C-101', residentName: 'Vũ Văn Nam', month: '1', year: 2026, managementFee: 500000, electricity: 980000, water: 260000, parking: 100000, total: 1840000, status: PaymentStatus.PAID, dueDate: '2026-01-10' },
+  { id: 'F-C410-012026', apartmentId: 'C-410', residentName: 'Trịnh Quốc Bảo', month: '1', year: 2026, managementFee: 800000, electricity: 2400000, water: 520000, parking: 250000, total: 3970000, status: PaymentStatus.PENDING, dueDate: '2026-01-10' },
 ];
+
 
 
 const mockResidents: Resident[] = [
